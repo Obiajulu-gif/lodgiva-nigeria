@@ -8,7 +8,6 @@ app_license = "agpl-3.0"
 # Apps
 # ------------------
 
-# required_apps = []
 
 # Each item in the list will be shown as an app in the apps page
 # add_to_apps_screen = [
@@ -256,3 +255,14 @@ app_license = "agpl-3.0"
 # List of apps whose translatable strings should be excluded from this app's translations.
 # ignore_translatable_strings_from = []
 
+
+# Lodgiva builds on Kamra: the Nigeria pack is claimed through Kamra's
+# `kamra_localization` hook (merged across apps by frappe.get_hooks), so
+# Nigeria works without editing the Kamra fork. Keep Lodgiva-specific
+# behaviour here rather than in apps/kamra - that is what keeps upgrades
+# from upstream Kamra a merge instead of a rewrite.
+required_apps = ["kamra"]
+
+kamra_localization = {
+	"Nigeria": "lodgiva_nigeria.localization.nigeria",
+}

@@ -89,7 +89,18 @@ def apply_nigerian_defaults():
 
 def after_install():
 	apply_nigerian_defaults()
+	_brand()
 
 
 def after_migrate():
 	apply_nigerian_defaults()
+	_brand()
+
+
+def _brand():
+	from lodgiva_nigeria.branding import apply_branding
+
+	try:
+		apply_branding()
+	except Exception:
+		frappe.log_error(title="Lodgiva branding")

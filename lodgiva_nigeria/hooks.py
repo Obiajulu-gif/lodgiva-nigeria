@@ -285,3 +285,13 @@ doc_events = {
 # Property Setters so Kamra's own doctypes stay untouched and upgradeable.
 after_install = "lodgiva_nigeria.install.after_install"
 after_migrate = "lodgiva_nigeria.install.after_migrate"
+
+# ── Lodgiva branding ─────────────────────────────────────────────────────
+# Frappe takes the login mark from the LAST app that declares app_logo_url,
+# and lodgiva_nigeria installs after kamra, so this wins without a fork edit.
+app_logo_url = "/assets/lodgiva_nigeria/lodgiva-mark.svg"
+
+website_context = {
+	"favicon": "/assets/lodgiva_nigeria/lodgiva-mark.svg",
+	"splash_image": "/assets/lodgiva_nigeria/lodgiva-mark.svg",
+}

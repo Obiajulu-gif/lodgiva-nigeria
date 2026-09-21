@@ -35,8 +35,15 @@ def apply_branding():
 		f'{BRAND_NAME} PMS · built on <a href="https://github.com/Kamra-PMS/kamra-pms">Kamra</a> '
 		f'(AGPL-3.0) · <a href="{SOURCE_URL}">source</a>'
 	)
+	# Kamra points the site home at its SPA route; the SPA now lives at
+	# /lodgiva, so logging in lands staff there rather than on a redirect.
+	settings.home_page = "lodgiva"
 	settings.flags.ignore_permissions = True
 	settings.save(ignore_permissions=True)
+
+	# The Apps launcher and Desk sidebar carry Kamra's workspace name.
+	for ws in frappe.get_all("Workspace", filters={"label": "Kamra"}, pluck="name"):
+		frappe.db.set_value("Workspace", ws, {"label": BRAND_NAME, "title": BRAND_NAME})
 
 	# The desk's own title bar and the login page heading.
 	try:

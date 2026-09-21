@@ -266,3 +266,22 @@ required_apps = ["kamra"]
 kamra_localization = {
 	"Nigeria": "lodgiva_nigeria.localization.nigeria",
 }
+
+# ── Lodgiva financial controls over Kamra ────────────────────────────────
+# The vertical slice (gap matrix §8) found that Kamra let a guest depart
+# owing money, let an unsettled folio be closed and invoiced, and accepted
+# the same payment reference twice. These are enforced on the DOCUMENT, not
+# only the REST route, so an internal caller cannot slip past them.
+doc_events = {
+	"Reservation": {
+		"before_save": "lodgiva_nigeria.controls.reservation_before_save",
+	},
+	"Folio": {
+		"before_save": "lodgiva_nigeria.controls.folio_before_save",
+	},
+}
+
+# Nigerian schema defaults (currency, tenders, TIN labels) applied as
+# Property Setters so Kamra's own doctypes stay untouched and upgradeable.
+after_install = "lodgiva_nigeria.install.after_install"
+after_migrate = "lodgiva_nigeria.install.after_migrate"

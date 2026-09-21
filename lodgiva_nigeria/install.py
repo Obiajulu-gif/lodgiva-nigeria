@@ -36,6 +36,11 @@ PROPERTY_SETTERS = [
 		"Cash\nBank Transfer\nPOS Terminal\nCard\nUPI\nOTA Prepaid\nCompany Credit\nPayment Link",
 		"Text",
 	),
+	# Guests: Kamra defaults nationality to Indian and ID to Aadhaar. NIN is
+	# Nigeria's national identity number; Aadhaar stays last so any Kamra code
+	# path that still writes it keeps validating.
+	("Guest", "nationality", "default", "Nigerian", "Text"),
+	("Guest", "id_type", "options", "\nNIN\nPassport\nDriving License\nVoter ID\nOther\nAadhaar", "Text"),
 	# Labels only - the fieldnames stay gst_* so Kamra's own queries work.
 	("Folio Charge", "gst_rate", "label", "VAT Rate", "Data"),
 	("Folio Charge", "gst_amount", "label", "VAT", "Data"),

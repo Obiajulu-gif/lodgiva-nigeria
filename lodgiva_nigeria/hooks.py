@@ -267,6 +267,12 @@ kamra_localization = {
 	"Nigeria": "lodgiva_nigeria.localization.nigeria",
 }
 
+# Payment gateways are claimed the same way: Kamra asks for "Paystack" and is
+# handed this module, so the fork stays free of gateway names.
+kamra_payment_gateways = {
+	"Paystack": "lodgiva_nigeria.paystack",
+}
+
 # ── Lodgiva financial controls over Kamra ────────────────────────────────
 # The vertical slice (gap matrix §8) found that Kamra let a guest depart
 # owing money, let an unsettled folio be closed and invoiced, and accepted
@@ -275,6 +281,11 @@ kamra_localization = {
 doc_events = {
 	"Reservation": {
 		"before_save": "lodgiva_nigeria.controls.reservation_before_save",
+		# Again after Kamra's on_update: checkout posts the nights the night
+		# audit has not reached yet (post_remaining_nights) AFTER before_save,
+		# so a stay could pass the first check at a zero balance and leave
+		# owing the room. Throwing here rolls the whole checkout back.
+		"on_update": "lodgiva_nigeria.controls.reservation_before_save",
 	},
 	"Folio": {
 		"before_save": "lodgiva_nigeria.controls.folio_before_save",

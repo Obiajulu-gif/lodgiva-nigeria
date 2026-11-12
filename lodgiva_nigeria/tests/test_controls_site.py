@@ -87,6 +87,19 @@ assert bal > 0, "expected an outstanding balance to test against"
 print("=== defect 1: checkout while owing ===")
 expect_refused("checkout is refused while money is owed", lambda: check_out(rn))
 
+# 2026-11-12: a stay the night audit has not reached shows a ZERO balance,
+# and checkout posts its nights only after before_save has passed. Eleven
+# demo stays departed owing their room this way.
+res2 = expect_ok("book a stay the night audit has not reached", lambda: create_booking(
+	property=PROP, room_type=f"{PROP}-STD",
+	check_in_date=nowdate(), check_out_date=add_days(nowdate(), 1),
+	guest_name="Tunde Bakare", phone="08055553333", adults=1, source="Manual",
+))
+if res2:
+	expect_ok("check in (folio at zero)", lambda: check_in(res2["reservation"]))
+	expect_refused("checkout is refused once it posts the unbilled night",
+	               lambda: check_out(res2["reservation"]))
+
 print("=== defect 2: closing and invoicing an unsettled folio ===")
 expect_refused("close is refused while money is owed", lambda: close_folio(folio))
 

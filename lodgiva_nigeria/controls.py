@@ -65,6 +65,10 @@ def reservation_before_save(doc, method=None):
 
 	if _unsettled_departures_allowed(doc.property):
 		# Allowed, but never silent - the audit trail is the whole point.
+		# Comment once, from on_update, where the balance includes the
+		# nights checkout has just posted.
+		if method != "on_update":
+			return
 		doc.add_comment(
 			"Comment",
 			_("Checked out with an unsettled balance of {0}, permitted by property policy.").format(balance),

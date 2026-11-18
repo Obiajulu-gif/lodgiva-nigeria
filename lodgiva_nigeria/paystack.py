@@ -85,7 +85,54 @@ def webhook():
 	if not secret or not hmac.compare_digest(given, expected):
 		frappe.throw("Invalid webhook signature", frappe.PermissionError)
 
-	posted = post_link_payment(
-		folio_name, float(data.get("amount") or 0) / 100, data.get("reference"))
+	# Paystack delivers the same event more than once, sometimes at the same
+	# moment. The loser of the folio lock gets a lock conflict (MariaDB
+	# snapshot isolation); retry it in a fresh transaction, where it sees
+	# the winner's payment and answers 200 instead of a 500 Paystack would
+	# keep retrying.
+	for attempt in range(3):
+		try:
+			return _apply(folio_name, prop, data)
+		except frappe.QueryDeadlockError:
+			frappe.db.rollback()
+			if attempt == 2:
+				raise
+
+
+def _apply(folio_name: str, prop: str, data: dict) -> dict:
+	from kamra.payments import post_link_payment
+	from lodgiva_nigeria.reconcile import record
+
+	reference = data.get("reference") or ""
+	amount = float(data.get("amount") or 0) / 100
+	problem = mismatch(folio_name, prop, reference, data.get("currency") or "")
+	if problem:
+		# Signed, so it is real money - but not provably this folio's. Park
+		# it for a human instead of crediting the wrong bill.
+		record(prop, "Paystack", reference, amount, currency=data.get("currency") or "",
+		       folio=folio_name, status="Unmatched", note=problem,
+		       payer=(data.get("customer") or {}).get("email") or "")
+		frappe.db.commit()  # nosemgrep: frappe-manual-commit -- persists before answering an external caller
+		return {"ok": True, "folio": folio_name, "posted": False, "parked": problem}
+
+	posted = post_link_payment(folio_name, amount, reference)
+	record(prop, "Paystack", reference, amount, currency=data.get("currency") or "",
+	       folio=folio_name, status="Matched",
+	       note="Paystack webhook, posted." if posted else "Paystack retry, already posted.")
 	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- persists before answering an external caller
 	return {"ok": True, "folio": folio_name, "posted": posted}
+
+
+def mismatch(folio: str, property: str, reference: str, currency: str) -> str | None:
+	"""Why a signed charge cannot be credited to `folio`, or None.
+
+	create_link issues references as <folio>-<8 chars>, and asks for the
+	property's currency. Anything else was not a link this folio issued."""
+	from kamra.payments import _currency
+
+	expected, _ = _currency(property)
+	if (currency or "").upper() != expected.upper():
+		return f"Paid in {currency or 'unknown currency'}, folio bills in {expected}."
+	if not reference.startswith(f"{folio}-"):
+		return f"Reference {reference} was not issued for {folio}."
+	return None
